@@ -1,3 +1,5 @@
+package prototype_A;
+
 import com.sun.istack.internal.NotNull;
 
 import javax.xml.bind.JAXB;
@@ -36,7 +38,7 @@ public class game_map_t {
      * register_a_client - register a client number `client_no` to
      *  get a virtual character from the map before game start. If
      *  there is no available character to use, it will throw
-     *  NoAvailableCharacterException. Otherwise, the available
+     *  prototype_A.NoAvailableCharacterException. Otherwise, the available
      *  character will return.
      *
      * @param client_no - the client number

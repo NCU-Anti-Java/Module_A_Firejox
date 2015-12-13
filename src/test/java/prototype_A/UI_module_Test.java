@@ -1,3 +1,5 @@
+package prototype_A;
+
 import com.sun.javafx.robot.FXRobot;
 import javafx.scene.input.KeyCode;
 import org.junit.After;

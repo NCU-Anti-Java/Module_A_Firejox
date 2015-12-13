@@ -1,3 +1,5 @@
+package prototype_A;
+
 import javafx.scene.layout.Pane;
 import prototype_B.TCPC_module;
 import prototype_D.DO_module;

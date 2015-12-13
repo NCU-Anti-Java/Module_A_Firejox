@@ -1,3 +1,5 @@
+package prototype_A;
+
 import prototype_B.TCPC_module;
 
 import javax.xml.bind.annotation.XmlAccessType;

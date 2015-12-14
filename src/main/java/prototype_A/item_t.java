@@ -21,7 +21,7 @@ public class item_t extends dynamic_object_t {
                             // should not greater than 1
 
     /*the reference count of item*/
-    private AtomicInteger ref_count = new AtomicInteger(0);
+    private int ref_count = 0;
 
     item_t() {
         super(0,0);
@@ -43,7 +43,7 @@ public class item_t extends dynamic_object_t {
     }
 
     int get_ref_count () {
-        return ref_count.get();
+        return ref_count;
     }
 
     void update_position () {}
@@ -70,7 +70,7 @@ public class item_t extends dynamic_object_t {
                      o_item.index == index &&
                      o_item.shared == shared &&
                      o_item.get_center().equals(get_center()) &&
-                     o_item.ref_count.get() == ref_count.get());
+                     o_item.ref_count == ref_count);
         }
 
         return false;
@@ -84,13 +84,12 @@ public class item_t extends dynamic_object_t {
         if (item == null)
             throw new NoSuchElementException();
 
+        synchronized (item) {
+            if (item.shared && item.ref_count == 1)
+                throw new ItemHasOwnedByOtherException();
 
-        if (item.shared && !item.ref_count.compareAndSet(0, 1))
-            throw new ItemHasOwnedByOtherException();
-
-        if (!item.shared)
-            item.ref_count.incrementAndGet();
-
+            item.ref_count++;
+        }
 
         return item;
     }
@@ -100,11 +99,11 @@ public class item_t extends dynamic_object_t {
         if (item == null)
             throw new NoSuchElementException();
 
-        item.ref_count.decrementAndGet();
+        synchronized (item) {
+            item.ref_count--;
+        }
         return null;
     }
 
 }
-
-
 

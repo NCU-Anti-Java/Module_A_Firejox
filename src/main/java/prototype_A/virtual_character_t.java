@@ -40,7 +40,7 @@ public class virtual_character_t extends dynamic_object_t {
     }
 
     private Integer client_no = null;
-    private AtomicInteger dir = new AtomicInteger(0);
+    private int dir = 0;
     private int velocity = 0;
     private int grab_range = 1;
 
@@ -67,10 +67,10 @@ public class virtual_character_t extends dynamic_object_t {
     /**
      * reset - reset the status of character.
      * */
-    void reset () {
+    synchronized void reset () {
         this.client_no = null;
         this.items.clear();
-        this.dir.lazySet(0);
+        this.dir = 0;
         this.velocity = 0;
     }
 
@@ -86,11 +86,11 @@ public class virtual_character_t extends dynamic_object_t {
      * */
     synchronized void set_dir (int move_code) {
         assert client_no != null : "The client number should be set!";
-        dir.set(move_code);
+        dir = move_code;
     }
 
     public int get_dir () {
-        return dir.get();
+        return dir;
     }
 
     /**
@@ -140,7 +140,7 @@ public class virtual_character_t extends dynamic_object_t {
 
         return xpoint_t.add(get_center(),
                 xpoint_t.mul (
-                        xy_move.getOrDefault(dir.get(), default_move),
+                        xy_move.getOrDefault(dir, default_move),
                         velocity));
     }
 
@@ -156,7 +156,7 @@ public class virtual_character_t extends dynamic_object_t {
 
         return xpoint_t.add(get_center(),
                 xpoint_t.mul (
-                        xy_move.getOrDefault(dir.get(), default_move),
+                        xy_move.getOrDefault(dir, default_move),
                         grab_range));
     }
 
@@ -172,7 +172,7 @@ public class virtual_character_t extends dynamic_object_t {
             return (ch.client_no == null ?
                         client_no == null :
                         ch.client_no.equals(client_no)) &&
-                    ch.dir.get() == dir.get() &&
+                    ch.dir == dir &&
                     ch.grab_range == grab_range &&
                     ch.items.equals(items);
         }

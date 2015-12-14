@@ -73,6 +73,7 @@ public class CDC_module implements CDC_module_interface {
      * @param client_no - the client number
      *
      * */
+    @Override
     public synchronized void addVirtualCharacter(int client_no)
             throws GameMapNotLoadError,
             NoAvailableCharacterException, ClientHasAddedException {
@@ -107,6 +108,7 @@ public class CDC_module implements CDC_module_interface {
      * @param y - the y pos of item
      *
      * */
+    @Override
     public void addItem(String name, int index,
                         boolean shared, int x, int y)
             throws GameMapNotLoadError {
@@ -129,6 +131,7 @@ public class CDC_module implements CDC_module_interface {
      * @param client_no - the client number
      * @param move_code - the new direction
      * */
+    @Override
     public void updateDirection(int client_no, int move_code)
             throws InvalidClientException {
 
@@ -145,6 +148,7 @@ public class CDC_module implements CDC_module_interface {
      * getItem - client `client` try to get item
      * @param client_no - the client number
      * */
+    @Override
     public void getItem(int client_no)
             throws InvalidClientException,
                     ItemHasOwnedByOtherException,
@@ -177,6 +181,7 @@ public class CDC_module implements CDC_module_interface {
     /**
      * getUpdateInfo - return the dynamic object info
      * */
+    @Override
     public synchronized Vector<dynamic_object_t> getUpdateInfo() {
         Vector<dynamic_object_t> objs = new Vector<>(update_items);
         objs.addAll(ch_arr);
@@ -210,6 +215,7 @@ public class CDC_module implements CDC_module_interface {
     /**
      * startUpdatingThread - start the updating thread
      * */
+    @Override
     public synchronized void startUpdatingThread()
             throws GameMapNotLoadError, NoClientConnectError {
 

@@ -13,10 +13,10 @@ import java.util.Vector;
 public class CDC_module implements CDC_module_interface {
 
     private static final WeakReference<virtual_character_t> de_ch =
-            new WeakReference<virtual_character_t>(null);
+            new WeakReference<>(null);
 
     private static final WeakReference<item_t> de_item =
-            new WeakReference<item_t>(null);
+            new WeakReference<>(null);
 
     private game_map_t gp = null;
 
@@ -89,12 +89,9 @@ public class CDC_module implements CDC_module_interface {
 
         v_ch = gp.register_a_client(client_no);
 
-        WeakReference<virtual_character_t> wva_ch;
-
         ch_arr.add(v_ch);
 
-        va_chs.put(client_no,
-                new WeakReference<virtual_character_t>(v_ch));
+        va_chs.put(client_no, new WeakReference<>(v_ch));
 
     }
 
@@ -121,8 +118,7 @@ public class CDC_module implements CDC_module_interface {
         items.add(item);
         update_items.add(item);
 
-        item_map.put(item.get_center(),
-                new WeakReference<item_t>(item));
+        item_map.put(item.get_center(), new WeakReference<>(item));
     }
 
 
@@ -135,13 +131,13 @@ public class CDC_module implements CDC_module_interface {
     public void updateDirection(int client_no, int move_code)
             throws InvalidClientException {
 
-        WeakReference<virtual_character_t> ch = va_chs
-                .getOrDefault(client_no, de_ch);
+        virtual_character_t ch = va_chs
+                .getOrDefault(client_no, de_ch).get();
 
-        if (ch.get() == null)
+        if (ch == null)
             throw new InvalidClientException();
 
-        ch.get().set_dir(move_code);
+        ch.set_dir(move_code);
     }
 
     /**
@@ -154,23 +150,20 @@ public class CDC_module implements CDC_module_interface {
                     ItemHasOwnedByOtherException,
                     NoSuchElementException {
 
-        WeakReference<virtual_character_t> ch = va_chs
-                .getOrDefault(client_no, de_ch);
+        virtual_character_t ch = va_chs
+                .getOrDefault(client_no, de_ch).get();
 
-        if (ch.get() == null)
+        if (ch == null)
             throw new InvalidClientException();
-
-        virtual_character_t v_ch = ch.get();
-
 
         item_t item = item_t
                 .ref(item_map
                         .getOrDefault(
-                                v_ch.grab_limit_position(),
+                                ch.grab_limit_position(),
                                 de_item)
                         .get());
 
-        v_ch.grab_item(item);
+        ch.grab_item(item);
 
         update_items.add(item);
 

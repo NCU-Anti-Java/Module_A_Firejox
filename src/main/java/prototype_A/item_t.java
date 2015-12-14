@@ -25,7 +25,7 @@ public class item_t extends dynamic_object_t {
 
     item_t() {
         super(0,0);
-        name = new String ("");
+        name = new String ();
     }
 
     item_t(String name, int index, boolean shared, int x, int y) {
@@ -33,7 +33,7 @@ public class item_t extends dynamic_object_t {
 
         Optional<String> s_opt = Optional.ofNullable(name);
 
-        this.name = s_opt.orElse(new String(""));
+        this.name = s_opt.orElse(new String());
         this.index = index;
         this.shared = shared;
     }
@@ -49,7 +49,7 @@ public class item_t extends dynamic_object_t {
     void update_position () {}
 
     public String get_name() {
-        return new String(name);
+        return name;
     }
 
     public int get_index() {

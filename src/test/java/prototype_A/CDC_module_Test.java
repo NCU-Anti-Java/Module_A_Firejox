@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.security.SecureRandom;
 import java.util.NoSuchElementException;
 import java.util.Vector;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * Created by firejox on 2015/12/12.
@@ -15,18 +16,24 @@ import java.util.Vector;
 public class CDC_module_Test {
     CDC_module module;
     game_map_t gp;
-
+    boolean e1, e2;
+    CyclicBarrier barrier;
 
     @Before
     public void set_up() throws Exception{
         module = new CDC_module();
         gp = game_map_t.random_build(20, 4);
+        e1 = e2 = false;
+        barrier = new CyclicBarrier(2);
     }
 
     @After
     public void clean_up() throws Exception {
         if (module.get_update_thread().isAlive())
             module.get_update_thread().interrupt();
+
+        module = null;
+        gp = null;
     }
 
 
@@ -207,8 +214,34 @@ public class CDC_module_Test {
                                 new item_t("0", 0, false, 1, 1))));
     }
 
-    @Test (expected = ItemHasOwnedByOtherException.class)
+    @Test
     public void test_get_item_shared () throws Throwable {
+         gp = game_map_t.random_build(0, 0);
+
+        gp.add_item("0", 0, true, 1, 1);
+        gp.add_a_character(1, 0);
+
+        module.load_game_map(gp.toString());
+
+        module.addVirtualCharacter(1);
+
+        module.updateDirection(1, virtual_character_t.face_south);
+
+        module.getItem(1);
+
+        virtual_character_t v_ch = (virtual_character_t)
+                (module.getUpdateInfo().lastElement());
+
+        item_t item = v_ch.get_items().firstElement();
+
+        Assert.assertTrue(item.equals(
+                        item_t.ref(
+                                new item_t("0", 0, true, 1, 1))));
+
+    }
+
+    @Test (expected = ItemHasOwnedByOtherException.class)
+    public void test_two_client_get_same_item_shared () throws Throwable {
         gp = game_map_t.random_build(0, 0);
         gp.add_item("0", 0, true, 1, 1);
 
@@ -227,8 +260,64 @@ public class CDC_module_Test {
         module.getItem(2);
     }
 
+
+    /**
+     * Use barrier to create race condition
+     * */
     @Test
-    public void test_get_item_unshared () throws Throwable {
+    public void test_two_client_get_same_item_shared_multi_thread ()
+        throws Throwable {
+
+        gp = game_map_t.random_build(0, 0);
+        gp.add_item("0", 0, true, 1, 1);
+
+        gp.add_a_character(1, 0);
+        gp.add_a_character(1, 2);
+
+        module.load_game_map(gp.toString());
+
+        module.addVirtualCharacter(1);
+        module.addVirtualCharacter(2);
+
+        module.updateDirection(1, virtual_character_t.face_north);
+        module.updateDirection(2, virtual_character_t.face_south);
+
+
+        Thread t1 = new Thread(()->{
+            try {
+                Thread.sleep(500);
+                barrier.await();
+                module.getItem(1);
+            } catch (Exception e) {
+                e1 = e.getClass() == ItemHasOwnedByOtherException.class;
+                e.printStackTrace();
+                System.err.println("thread 1");
+            }
+        });
+        t1.start();
+
+        Thread t2 = new Thread(()->{
+            try {
+                Thread.sleep(100);
+                barrier.await();
+                module.getItem(2);
+            } catch (Exception e) {
+                e2 = e.getClass() == ItemHasOwnedByOtherException.class;
+                e.printStackTrace();
+                System.err.println("thread 2");
+            }
+        });
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        Assert.assertTrue((e1 && !e2)|| (e2 && !e1));
+
+    }
+
+    @Test
+    public void test_two_client_get_item_unshared () throws Throwable {
 
         gp = game_map_t.random_build(0, 0);
         gp.add_item("0", 0, false, 1, 1);

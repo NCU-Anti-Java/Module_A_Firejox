@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by firejox on 2015/12/8.
@@ -39,7 +40,7 @@ public class virtual_character_t extends dynamic_object_t {
     }
 
     private Integer client_no = null;
-    private int dir = 0;
+    private AtomicInteger dir = new AtomicInteger(0);
     private int velocity = 0;
     private int grab_range = 1;
 
@@ -69,7 +70,7 @@ public class virtual_character_t extends dynamic_object_t {
     void reset () {
         this.client_no = null;
         this.items.clear();
-        this.dir = 0;
+        this.dir.lazySet(0);
         this.velocity = 0;
     }
 
@@ -85,18 +86,18 @@ public class virtual_character_t extends dynamic_object_t {
      * */
     synchronized void set_dir (int move_code) {
         assert client_no != null : "The client number should be set!";
-        this.dir = move_code;
+        dir.set(move_code);
     }
 
     public int get_dir () {
-        return dir;
+        return dir.get();
     }
 
     /**
      * grab_item - get a item
      * @param item - the virtual item grabbed.
      * */
-    synchronized void grab_item (item_t item) {
+    void grab_item (item_t item) {
         assert client_no != null : "The client number should be set!";
         items.add(item);
     }
@@ -139,7 +140,7 @@ public class virtual_character_t extends dynamic_object_t {
 
         return xpoint_t.add(get_center(),
                 xpoint_t.mul (
-                        xy_move.getOrDefault(dir, default_move),
+                        xy_move.getOrDefault(dir.get(), default_move),
                         velocity));
     }
 
@@ -155,7 +156,7 @@ public class virtual_character_t extends dynamic_object_t {
 
         return xpoint_t.add(get_center(),
                 xpoint_t.mul (
-                        xy_move.getOrDefault(dir, default_move),
+                        xy_move.getOrDefault(dir.get(), default_move),
                         grab_range));
     }
 
@@ -171,12 +172,29 @@ public class virtual_character_t extends dynamic_object_t {
             return (ch.client_no == null ?
                         client_no == null :
                         ch.client_no.equals(client_no)) &&
-                    ch.dir == dir &&
+                    ch.dir.get() == dir.get() &&
                     ch.grab_range == grab_range &&
                     ch.items.equals(items);
         }
 
         return false;
+    }
+
+}
+
+class item_vector_t extends Vector<item_t> {
+    item_vector_t() {
+        super();
+    }
+
+    public void clear() {
+        this.forEach(item_t::unref);
+        super.clear();
+    }
+
+    public void finalize() throws Throwable {
+        clear();
+        super.finalize();
     }
 
 }

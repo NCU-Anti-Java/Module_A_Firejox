@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by firejox on 2015/12/8.
@@ -20,7 +20,8 @@ public class item_t extends dynamic_object_t {
     private boolean shared; //if item is shared then the reference count
                             // should not greater than 1
 
-    private int ref_count; //the reference count of item
+    /*the reference count of item*/
+    private AtomicInteger ref_count = new AtomicInteger(0);
 
     item_t() {
         super(0,0);
@@ -35,7 +36,6 @@ public class item_t extends dynamic_object_t {
         this.name = s_opt.orElse(new String(""));
         this.index = index;
         this.shared = shared;
-        this.ref_count = 0;
     }
 
     boolean is_shared () {
@@ -43,7 +43,7 @@ public class item_t extends dynamic_object_t {
     }
 
     int get_ref_count () {
-        return ref_count;
+        return ref_count.get();
     }
 
     void update_position () {}
@@ -65,57 +65,46 @@ public class item_t extends dynamic_object_t {
         if (obj instanceof item_t) {
             item_t o_item = (item_t)obj;
 
-            return o_item.name.equals(name) &&
-                    o_item.index == index &&
-                    o_item.shared == o_item.shared &&
-                    o_item.get_center().equals(get_center()) &&
-                    o_item.ref_count == ref_count;
+            return  o_item == this ||
+                    (o_item.name.equals(name) &&
+                     o_item.index == index &&
+                     o_item.shared == shared &&
+                     o_item.get_center().equals(get_center()) &&
+                     o_item.ref_count.get() == ref_count.get());
         }
 
         return false;
     }
 
-    static public synchronized item_t ref(item_t item)
+    static public item_t ref(item_t item)
                 throws ItemHasOwnedByOtherException, NoSuchElementException {
+
+
 
         if (item == null)
             throw new NoSuchElementException();
 
-        if (item.shared && item.ref_count == 1)
+
+        if (item.shared && !item.ref_count.compareAndSet(0, 1))
             throw new ItemHasOwnedByOtherException();
 
-        item.ref_count++;
+        if (!item.shared)
+            item.ref_count.incrementAndGet();
+
 
         return item;
     }
 
-    static public synchronized item_t unref(item_t item)
+    static public item_t unref(item_t item)
                 throws NoSuchElementException {
         if (item == null)
             throw new NoSuchElementException();
 
-        item.ref_count --;
+        item.ref_count.decrementAndGet();
         return null;
     }
 
 }
 
-class item_vector_t extends Vector<item_t> {
-    item_vector_t() {
-        super();
-    }
 
-    public void clear() {
-        for (item_t i : this) {
-            item_t.unref(i);
-        }
-        super.clear();
-    }
-
-    public void finalize() throws Throwable {
-        clear();
-        super.finalize();
-    }
-
-}
 

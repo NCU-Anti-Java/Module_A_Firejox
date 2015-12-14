@@ -10,7 +10,7 @@ import java.util.Vector;
 /**
  * Created by firejox on 2015/12/7.
  */
-public class CDC_module {
+public class CDC_module implements CDC_module_interface {
 
     private static final WeakReference<virtual_character_t> de_ch =
             new WeakReference<virtual_character_t>(null);
@@ -43,9 +43,10 @@ public class CDC_module {
     private void update_virtual_character() {
         try {
             while (true) {
-                for (virtual_character_t ch : ch_arr)
-                    ch.update_position();
-
+                synchronized (this) {
+                    for (virtual_character_t ch : ch_arr)
+                        ch.update_position();
+                }
                 long cur_t = System.currentTimeMillis();
 
                 if (prev_t + 500 > cur_t) {
@@ -58,6 +59,7 @@ public class CDC_module {
 
                     Thread.sleep(500);
                 }
+
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -143,7 +145,7 @@ public class CDC_module {
      * getItem - client `client` try to get item
      * @param client_no - the client number
      * */
-    public synchronized void getItem(int client_no)
+    public void getItem(int client_no)
             throws InvalidClientException,
                     ItemHasOwnedByOtherException,
                     NoSuchElementException {
@@ -175,7 +177,7 @@ public class CDC_module {
     /**
      * getUpdateInfo - return the dynamic object info
      * */
-    public Vector<dynamic_object_t> getUpdateInfo() {
+    public synchronized Vector<dynamic_object_t> getUpdateInfo() {
         Vector<dynamic_object_t> objs = new Vector<>(update_items);
         objs.addAll(ch_arr);
         update_items.clear();
@@ -187,7 +189,7 @@ public class CDC_module {
     /**
      * load_game_map - load the game map
      * */
-    public void load_game_map(String str) {
+    public synchronized void load_game_map(String str) {
 
         gp = game_map_t.load_from_string(str);
 
@@ -208,7 +210,7 @@ public class CDC_module {
     /**
      * startUpdatingThread - start the updating thread
      * */
-    public void startUpdatingThread()
+    public synchronized void startUpdatingThread()
             throws GameMapNotLoadError, NoClientConnectError {
 
         if (gp == null || items.isEmpty())
